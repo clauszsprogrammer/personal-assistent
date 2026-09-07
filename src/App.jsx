@@ -435,80 +435,59 @@ export default function App() {
     setApiMessages(msgs);
 
     try {
-      /*
-       * IMPORTANTE:
-       *
-       * Esta chamada direta à Anthropic não é segura para
-       * produção porque uma API key não deve ficar exposta
-       * no navegador.
-       *
-       * Por enquanto, mantemos a estrutura preparada.
-       * Depois vamos trocar por:
-       *
-       * fetch('/api/chat', ...)
-       *
-       * e criar um backend seguro.
-       */
+  const messageText =
+    typeof content === 'string'
+      ? content
+      : content
+          .filter((item) => item.type === 'text')
+          .map((item) => item.text)
+          .join(' ');
 
-      const response = await fetch(
-        'https://api.anthropic.com/v1/messages',
+  const response = await fetch('/api/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      message: `${SYSTEM_BASE}\n\nHoje é ${todayLabel()}.\n\nUsuário: ${messageText}`
+    })
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Erro ao comunicar com a IA');
+  }
+
+  msgs = [
+    ...msgs,
+    {
+      role: 'assistant',
+      content: [
         {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-6',
-            max_tokens: 1000,
-            system: `${SYSTEM_BASE}\n\nHoje é ${todayLabel()}.`,
-            messages: msgs
-          })
+          type: 'text',
+          text: data.reply
         }
-      );
-
-      const data = await response.json();
-
-      if (data && data.content) {
-        msgs = [
-          ...msgs,
-          {
-            role: 'assistant',
-            content: data.content
-          }
-        ];
-      } else {
-        msgs = [
-          ...msgs,
-          {
-            role: 'assistant',
-            content: [
-              {
-                type: 'text',
-                text:
-                  'Não consegui obter uma resposta da Íris agora.'
-              }
-            ]
-          }
-        ];
-      }
-    } catch (error) {
-      console.error('Erro na IA:', error);
-
-      msgs = [
-        ...msgs,
-        {
-          role: 'assistant',
-          content: [
-            {
-              type: 'text',
-              text:
-                'Ops, tive um problema para responder agora. Tenta de novo?'
-            }
-          ]
-        }
-      ];
+      ]
     }
+  ];
 
+} catch (error) {
+  console.error('Erro na IA:', error);
+
+  msgs = [
+    ...msgs,
+    {
+      role: 'assistant',
+      content: [
+        {
+          type: 'text',
+          text: 'Ops, tive um problema para responder agora. Tenta de novo?'
+        }
+      ]
+    }
+  ];
+}
     setApiMessages(msgs);
     setLoading(false);
   }
