@@ -1,0 +1,10 @@
+{
+  "name": "Íris - Assistente Pessoal",
+  "short_name": "Íris",
+  "description": "Seu assistente pessoal",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0A1512",
+  "theme_color": "#0A1512",
+  "orientation": "portrait"
+}
